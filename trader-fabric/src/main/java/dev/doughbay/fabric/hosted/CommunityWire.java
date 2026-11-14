@@ -6,7 +6,7 @@ import java.util.*;
 
 /** Closed upload schema. Never accepts raw lore, chat, descriptors, UUIDs or local identifiers. */
 public final class CommunityWire {
-    public static final URI BASE=URI.create("https://gonuts.at/community/v1/");
+    public static final URI BASE=URI.create("https://gonuts.cyou/community/v1/");
     public static final String CONSENT="share-observations-v1";
     public static boolean account(String name){return name!=null&&name.matches("\\.?[A-Za-z0-9_]{2,20}");}
     public static String owner(List<String> tooltip){

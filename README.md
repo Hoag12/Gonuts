@@ -14,9 +14,17 @@
 5. Configure trade limits in the panel; live trading stays off until you start it.
 
 Notes for this fork:
-- The hosted dashboard runs at **https://gonuts.cyou**; 
-- The original hosted extras (swarm API, community ranking, bug-report/uploads at `gonuts.at`) were retired
-  by the upstream project and are not operated by this fork. Core trading and the dashboard link work.
+- The hosted dashboard runs at **https://gonuts.cyou**;
+- Swarm now runs on this fork: linked hives share prices and completed sales through **https://gonuts.cyou**.
+  The other upstream hosted extras (community ranking pages, bug-report/uploads at `gonuts.at`) stay retired.
+### Swarm
+
+Every linked hive contributes public observations to the dashboard it is linked to: asking prices, price
+levels, order-book levels and completed sales (prices, quantities and timestamps only - account names are
+never uploaded or stored). All hives linked to the same dashboard can query those shared answers and the
+completed-sale history. Results are historical context: a live scan and the local safety gates still decide
+every trade. Turning Swarm off or unlinking stops your contribution.
+
 - `gonuts-dashboard/config.json` can point the client at a different self-hosted dashboard
   (`baseUrl`, `page`, `redeem`, `check`, `socket`).
 
