@@ -14,8 +14,7 @@
 5. Configure trade limits in the panel; live trading stays off until you start it.
 
 Notes for this fork:
-- The hosted dashboard runs at **https://gonuts.cyou**; `vanillavn.xyz` redirects to it so one sign-in covers
-  both domains. All dashboard data lives on that one server.
+- The hosted dashboard runs at **https://gonuts.cyou**; 
 - The original hosted extras (swarm API, community ranking, bug-report/uploads at `gonuts.at`) were retired
   by the upstream project and are not operated by this fork. Core trading and the dashboard link work.
 - `gonuts-dashboard/config.json` can point the client at a different self-hosted dashboard
