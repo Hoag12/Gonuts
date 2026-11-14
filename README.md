@@ -7,7 +7,7 @@
 
 1. Minecraft **26.2** with **Fabric Loader** and **Java 25**.
 2. Download the mod jar from [Releases](../../releases) and put it in `.minecraft/mods` (or your launcher's
-   mods folder, e.g. Modrinth/Prism "Fabulously Optimized" profile).
+   mods folder, e.g. Modrinth/Prism profile).
 3. Launch the game, open the panel with **B → Accounts → Link account**.
 4. Sign in at **https://gonuts.cyou/dashboard** with Discord, choose **Link client**, then type the pairing
    code into the game and press **Enter**. The chip turns **CONNECTED** and shows **Online**.
