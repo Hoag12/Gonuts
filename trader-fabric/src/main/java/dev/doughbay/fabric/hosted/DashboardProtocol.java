@@ -6,17 +6,24 @@ import java.net.URI;
 import java.util.*;
 import java.nio.charset.StandardCharsets;
 
-/** Fixed destination and allowlisted wire projection; no raw log, detail or action text. */
+/**
+ * Fixed destination and allowlisted wire projection; no raw log, detail or action text.
+ */
 public final class DashboardProtocol {
     public static final ObjectMapper JSON=new ObjectMapper();
-    public static final URI PAGE=URI.create("https://gonuts.at/dashboard/");
-    public static final URI REDEEM=URI.create("https://gonuts.at/dashboard/api/pair/redeem");
-    public static final URI CHECK=URI.create("https://gonuts.at/dashboard/api/client/check");
-    public static final URI SOCKET=URI.create("wss://gonuts.at/dashboard/ws/client");
+    public static final URI DEFAULT_PAGE=URI.create("https://gonuts.cyou/dashboard");
+    public static final URI DEFAULT_REDEEM=URI.create("https://gonuts.cyou/dashboard/api/pair/redeem");
+    public static final URI DEFAULT_CHECK=URI.create("https://gonuts.cyou/dashboard/api/client/check");
+    public static final URI DEFAULT_SOCKET=URI.create("wss://gonuts.cyou/dashboard/ws/client");
     public static final int MAX_BYTES=32768;
     public static final int MAX_PANEL_FRAME_BYTES=768*1024;
     public static final List<String> CAPABILITIES=List.of("pause","resume","snapshot","panel","swarm_enable","swarm_disable","swarm_rank","swarm_staff","read_savings","data_use","settings_analysis","diagnostic_history");
     private DashboardProtocol(){}
+    /** The dashboard base URL, from the mod's config file or the public default. */
+    public static URI page(){return DashboardConfig.page();}
+    public static URI redeem(){return DashboardConfig.redeem();}
+    public static URI check(){return DashboardConfig.check();}
+    public static URI socket(){return DashboardConfig.socket();}
     public static String code(String input){
         String value=Objects.requireNonNullElse(input,"").toUpperCase(Locale.ROOT).replace("-","").replace(" ","").replace('0','O').replace('1','L').replace('I','L');
         if(!value.matches("[A-Z2-9]{8}"))throw new IllegalArgumentException("Enter the eight-character pairing code");

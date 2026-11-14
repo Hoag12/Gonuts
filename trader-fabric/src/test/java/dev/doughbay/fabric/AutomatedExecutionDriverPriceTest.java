@@ -79,4 +79,16 @@ class AutomatedExecutionDriverPriceTest {
     void anUnknownSuffixIsTreatedAsCoins() {
         assertEquals(1, AutomatedExecutionDriver.displayedPriceUnit("22", "x"));
     }
-}
+
+    @Test
+        void purchasePriceReadsThePrincipalBehindTheTax() {
+            // DonutSMP's confirmation dialog paints the same tax annotation as the
+            // listing page, so the purchase gate must read the principal there too.
+            assertEquals(java.util.Set.of(6_100_000L), AutomatedExecutionDriver.pricesFromTooltip(
+                    java.util.List.of("$ 6.1M (+$ 122K tax)")));
+            assertEquals(java.util.Set.of(6_100_000L), AutomatedExecutionDriver.pricesFromTooltip(
+                    java.util.List.of("$ 6.1M (+ $ 122K tax)")));
+            assertEquals(java.util.Set.of(6_100_000L), AutomatedExecutionDriver.pricesFromTooltip(
+                    java.util.List.of("$ 6.1M (+$ 122K tax)", "Time Left:", "23h 51m")));
+        }
+    }

@@ -210,6 +210,9 @@ public final class AutomatedExecutionDriver implements ExecutionDriver {
      */
     private static final Pattern BARE_PRICE_FIELD = Pattern.compile(
             "(?i)^\\s*\\$\\s*(" + NUMBER_TOKEN + ")\\s*([kmbt])?\\s*(?:coins?)?\\s*$");
+    private static final Pattern TAX_ANNOTATED_PRICE = Pattern.compile(
+            "(?i)^(\\s*\\$\\s*(?:" + NUMBER_TOKEN + ")\\s*[kmbt]?\\s*(?:coins?)?)"
+                    + "\\s*\\(\\+\\s*\\$?\\s*(" + NUMBER_TOKEN + ")\\s*([kmbt])?\\s+tax\\)\\s*$");
 
     /** Recognized auction ownership fields; arbitrary username mentions do not count. */
     private static final Pattern SELLER_FIELD = Pattern.compile(
@@ -3635,7 +3638,7 @@ public final class AutomatedExecutionDriver implements ExecutionDriver {
             ItemStack stack = slot.getItem();
             if (stack.isEmpty() || menuSlot >= 45) continue;
             List<String> tips = tooltipLines(client, stack);
-            PriceEvidence price = authoritativePriceEvidence(tips);
+            PriceEvidence price = ownedPriceEvidence(tips);
             if (!price.sawAuthoritativeField() || price.unclear()) {
                 // Most of what lands here is furniture: the filler panes and
                 // the "List" button, sixteen of them on a half-empty page and
@@ -3823,7 +3826,7 @@ public final class AutomatedExecutionDriver implements ExecutionDriver {
             ItemStack stack = slot.getItem();
             if (stack.isEmpty() || !itemId(stack).equals(targetItemId)
                     || stack.getCount() != targetCount) continue;
-            PriceEvidence price = authoritativePriceEvidence(tooltipLines(client, stack));
+            PriceEvidence price = ownedPriceEvidence(tooltipLines(client, stack));
             if (!price.sawAuthoritativeField() || price.unclear()) continue;
             long displayed = price.displayed();
             long band = price.band();
@@ -3958,7 +3961,7 @@ public final class AutomatedExecutionDriver implements ExecutionDriver {
             Slot slot = container.getMenu().slots.get(i);
             if (slot.container == client.player.getInventory() || slot.getItem().isEmpty()) continue;
             ItemStack stack = slot.getItem();
-            PriceEvidence price = authoritativePriceEvidence(tooltipLines(client, stack));
+            PriceEvidence price = ownedPriceEvidence(tooltipLines(client, stack));
             key.append('|').append(i).append(':').append(itemId(stack)).append(':').append(stack.getCount())
                     .append(':').append(price.displayed()).append(':').append(price.band())
                     .append(':').append(price.unclear());
@@ -3995,7 +3998,7 @@ public final class AutomatedExecutionDriver implements ExecutionDriver {
         int checked = Math.max(1, Math.min(45, usable));
         int vacant = 0;
         for (OwnListingCell cell : cells.subList(0, checked)) {
-            PriceEvidence price = authoritativePriceEvidence(cell.tooltip());
+            PriceEvidence price = ownedPriceEvidence(cell.tooltip());
             // A listed stack of panes can have a custom name. Price/collection
             // evidence takes precedence over any resemblance to UI furniture.
             if (price.sawAuthoritativeField()) {
@@ -4070,7 +4073,7 @@ public final class AutomatedExecutionDriver implements ExecutionDriver {
 
     /** A cell the player's rank can list in: a listing, one waiting to be collected, or a vacant slot. */
     private static boolean ownCell(OwnListingCell cell) {
-        PriceEvidence price = authoritativePriceEvidence(cell.tooltip());
+        PriceEvidence price = ownedPriceEvidence(cell.tooltip());
         if (price.sawAuthoritativeField()) return !price.unclear();
         if (waitingToBeCollected(cell.tooltip())) return true;
         List<String> lines = cell.tooltip().stream().map(String::strip).toList();
@@ -4089,7 +4092,7 @@ public final class AutomatedExecutionDriver implements ExecutionDriver {
     /** A cell the rank does not have: the server's own pane, saying so. */
     private static boolean lockedCell(OwnListingCell cell) {
         if (cell.itemId().equals("minecraft:air")) return false;
-        if (authoritativePriceEvidence(cell.tooltip()).sawAuthoritativeField()) return false;
+        if (ownedPriceEvidence(cell.tooltip()).sawAuthoritativeField()) return false;
         List<String> lines = cell.tooltip().stream().map(String::strip).toList();
         return !lines.isEmpty() && (lines.getFirst().equalsIgnoreCase("Locked")
                 || lines.getFirst().equalsIgnoreCase("Locked slot"));
@@ -4123,7 +4126,7 @@ public final class AutomatedExecutionDriver implements ExecutionDriver {
             // Air is a page still loading, and a listing or a vacant slot past
             // a cell that is neither is a page this does not understand.
             if (cell.itemId().equals("minecraft:air")) return 0;
-            if (authoritativePriceEvidence(cell.tooltip()).sawAuthoritativeField()) return 0;
+            if (ownedPriceEvidence(cell.tooltip()).sawAuthoritativeField()) return 0;
             if (waitingToBeCollected(cell.tooltip())) return 0;
             List<String> lines = cell.tooltip().stream().map(String::strip).toList();
             if (!lines.isEmpty() && lines.getFirst().equalsIgnoreCase("List")) return 0;
@@ -7521,13 +7524,38 @@ public final class AutomatedExecutionDriver implements ExecutionDriver {
         return false;
     }
 
+    private static PriceEvidence ownedPriceEvidence(List<String> tooltip) {
+        // Tax annotations do not change our listing principal; purchase gates must still reject them.
+        List<String> principal = new ArrayList<>();
+        for (String line : tooltip) {
+            Matcher taxed = TAX_ANNOTATED_PRICE.matcher(line);
+            if (taxed.matches()) {
+                Long tax = parseAmount(taxed.group(2), taxed.group(3));
+                if (tax == null || tax < 0) return new PriceEvidence(Set.of(), true, true, 0, 1);
+                principal.add(taxed.group(1));
+            } else {
+                if (line.stripLeading().startsWith("$") && !BARE_PRICE_FIELD.matcher(line).matches()) {
+                    return new PriceEvidence(Set.of(), true, true, 0, 1);
+                }
+                principal.add(line);
+            }
+        }
+        return authoritativePriceEvidence(principal);
+    }
+
+    private static String stripTaxAnnotation(String line) {
+        Matcher taxed = TAX_ANNOTATED_PRICE.matcher(line);
+        return taxed.matches() ? taxed.group(1) : line;
+    }
+
     private static PriceEvidence authoritativePriceEvidence(List<String> tooltip) {
         Set<Long> prices = new LinkedHashSet<>();
         boolean sawField = false;
         boolean malformed = false;
         long tolerance = 0;
         long band = 1;
-        for (String line : tooltip) {
+        for (String rawLine : tooltip) {
+            String line = stripTaxAnnotation(rawLine);
             if (!AUTHORITATIVE_PRICE_PREFIX.matcher(line).find()) {
                 continue;
             }
@@ -7547,7 +7575,8 @@ public final class AutomatedExecutionDriver implements ExecutionDriver {
         if (!sawField) {
             // No labelled field: fall back to the bare currency line, which is
             // the only price DonutSMP's auction GUI shows.
-            for (String line : tooltip) {
+            for (String rawLine : tooltip) {
+                String line = stripTaxAnnotation(rawLine);
                 Matcher bare = BARE_PRICE_FIELD.matcher(line);
                 if (!bare.matches()) continue;
                 sawField = true;

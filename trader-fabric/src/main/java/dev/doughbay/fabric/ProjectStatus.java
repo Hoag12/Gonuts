@@ -8,5 +8,5 @@ public final class ProjectStatus {
     public static final String SOURCE = "https://github.com/cody-raves/Gonuts";
     public static final String PAGES = "https://cody-raves.github.io/Gonuts/";
     private ProjectStatus() {}
-    public static boolean publicServicesEnabled() { return false; }
+    public static boolean publicServicesEnabled() { return true; }
 }

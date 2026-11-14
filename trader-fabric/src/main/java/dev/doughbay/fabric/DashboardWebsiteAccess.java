@@ -15,12 +15,12 @@ final class DashboardWebsiteAccess {
         this.clipboard = clipboard;
     }
 
-    String address() { return DashboardProtocol.PAGE.toASCIIString(); }
+    String address() { return DashboardProtocol.page().toASCIIString(); }
     String message() { return message; }
 
     void open() {
         try {
-            launcher.accept(DashboardProtocol.PAGE);
+            launcher.accept(DashboardProtocol.page());
             message = "No browser? Copy this address.";
         } catch (RuntimeException unavailable) {
             message = "Browser unavailable. Copy this address.";

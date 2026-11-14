@@ -3,6 +3,7 @@ package dev.doughbay.fabric;
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.doughbay.core.automation.ContinuousAutomationPolicy;
 import dev.doughbay.fabric.automation.AutomationSessionController;
+import dev.doughbay.fabric.hosted.DashboardConfig;
 import dev.doughbay.storage.AutomationPersistenceWorker;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
@@ -465,9 +466,10 @@ public class DoughBayClient implements ClientModInitializer {
                 category));
 
         DoughBayClient.LOGGER.info(ProjectStatus.NOTICE);
-        ClientTickEvents.END_CLIENT_TICK.register(SidebarBalance::tick);
-        ClientTickEvents.END_CLIENT_TICK.register(RegionMapReport::tick);
-        dev.doughbay.fabric.hosted.HostedDashboardClient.INSTANCE.start(
+                ClientTickEvents.END_CLIENT_TICK.register(SidebarBalance::tick);
+                ClientTickEvents.END_CLIENT_TICK.register(RegionMapReport::tick);
+                DashboardConfig.load(net.fabricmc.loader.api.FabricLoader.getInstance().getGameDir());
+                dev.doughbay.fabric.hosted.HostedDashboardClient.INSTANCE.start(
                 net.fabricmc.loader.api.FabricLoader.getInstance().getGameDir(),HiveSetup.sharedDirectoryOr(config.directory()),config.databasePath(),BugReportBuild.current());
         ClientTickEvents.END_CLIENT_TICK.register(dev.doughbay.fabric.hosted.HostedDashboardClient.INSTANCE::tick);
         HiveDiscovery.start(net.fabricmc.loader.api.FabricLoader.getInstance().getGameDir());

@@ -102,18 +102,18 @@ public final class HostedDashboardClient {
         view=new View(false,false,true,"","Linking securely...",0);long operation=epochs.incrementAndGet();
         worker.execute(()->{
             try {
-                var request=HttpRequest.newBuilder(DashboardProtocol.REDEEM).timeout(Duration.ofSeconds(15)).header("Content-Type","application/json")
+                var request=HttpRequest.newBuilder(DashboardProtocol.redeem()).timeout(Duration.ofSeconds(15)).header("Content-Type","application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(DashboardProtocol.pairing(normalized,name,build,hive).toString())).build();
                 var response=http.send(request,HttpResponse.BodyHandlers.ofByteArray());
                 if(operation!=epochs.get())return;
                 if(response.statusCode()!=201){long retry=response.statusCode()==429?retry(response):0;view=new View(false,false,false,"",DashboardProtocol.pairError(response.statusCode()),retry);return;}
                 if(response.body().length>DashboardProtocol.MAX_BYTES)throw new IllegalStateException();
                 var j=DashboardProtocol.JSON.readTree(response.body());
-                if(j.path("protocol").asInt()!=1||!j.path("wsUrl").asText().equals(DashboardProtocol.SOCKET.toString())||!j.path("checkUrl").asText().equals(DashboardProtocol.CHECK.toString()))throw new IllegalStateException();
+                if(j.path("protocol").asInt()!=1||!j.path("wsUrl").asText().equals(DashboardProtocol.socket().toString())||!j.path("checkUrl").asText().equals(DashboardProtocol.check().toString()))throw new IllegalStateException();
                 var next=new DashboardStore.Link(j.path("installationId").asLong(),j.path("credential").asText(),j.path("name").asText());
                 store.save(next);link=next;attempts=0;nextConnect=0;view=new View(true,false,false,next.name,"Linked; connecting",0);
                 CommunityClient.INSTANCE.dashboardPaired();
-            }catch(Exception e){if(operation==epochs.get())view=new View(false,false,false,"","Could not link or save private settings; use a new code if it was consumed",0);}
+            }catch(Exception e){if(operation==epochs.get()){DoughBayClient.LOGGER.warn("DoughBay link failed: {}",e.toString());view=new View(false,false,false,"","Link failed: "+(e.getMessage()==null?e.getClass().getSimpleName():e.getMessage()),0);}}
         });
     }
     /** Only community enrollment may use this dashboard credential; it never leaves this transport. */
@@ -234,7 +234,7 @@ public final class HostedDashboardClient {
     private void connect() {
         if(link==null)return;connecting=true;welcome=false;readSavingsSupported=false;dataUseSupported=false;settingsAnalysisSupported=false;diagnosticHistory.disconnected();epoch=epochs.incrementAndGet();long own=epoch;
         view=new View(true,false,false,link.name,"Checking link",0);
-        var request=HttpRequest.newBuilder(DashboardProtocol.CHECK).timeout(Duration.ofSeconds(10)).header("Authorization","Bearer "+link.credential)
+        var request=HttpRequest.newBuilder(DashboardProtocol.check()).timeout(Duration.ofSeconds(10)).header("Authorization","Bearer "+link.credential)
             .header("Content-Type","application/json").POST(HttpRequest.BodyPublishers.ofString("{}")).build();
         http.sendAsync(request,HttpResponse.BodyHandlers.ofByteArray()).whenComplete((r,e)->worker.execute(()->{
             if(epochs.get()!=own)return;
@@ -249,7 +249,7 @@ public final class HostedDashboardClient {
                     link=new DashboardStore.Link(link.installationId,link.credential,currentName);store.save(link);
                 }
                 http.newWebSocketBuilder().connectTimeout(Duration.ofSeconds(10)).header("Authorization","Bearer "+link.credential)
-                    .buildAsync(DashboardProtocol.SOCKET,new Listener(own)).whenComplete((ws,error)->worker.execute(()->{
+                                    .buildAsync(DashboardProtocol.socket(),new Listener(own)).whenComplete((ws,error)->worker.execute(()->{
                         if(epochs.get()!=own){if(ws!=null)ws.abort();return;}
                         if(error!=null){failed("Dashboard socket unavailable; retrying");return;}
                         socket=ws;connecting=false;connectedAt=System.currentTimeMillis();lastPing=connectedAt;lastTelemetry=0;lastShape="";writes=CompletableFuture.completedFuture(null);pendingWrites=0;

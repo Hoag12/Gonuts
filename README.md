@@ -1,4 +1,25 @@
-> **No longer publicly maintained or supported.** After seven weeks of development, public support has ended. Fork the source to make changes or maintain your own version. See [RETIREMENT.md](RETIREMENT.md).
+> **Community fork.** This build is maintained by [Hoag12](https://github.com/Hoag12) from the original
+> [cody-raves/Gonuts](https://github.com/cody-raves/Gonuts) (MIT). The original author's project is no longer
+> publicly maintained; see [RETIREMENT.md](RETIREMENT.md). This fork keeps local trading and re-enables the
+> self-hosted dashboard link.
+
+## Install (this fork)
+
+1. Minecraft **26.2** with **Fabric Loader** and **Java 25**.
+2. Download the mod jar from [Releases](../../releases) and put it in `.minecraft/mods` (or your launcher's
+   mods folder, e.g. Modrinth/Prism "Fabulously Optimized" profile).
+3. Launch the game, open the panel with **B → Accounts → Link account**.
+4. Sign in at **https://gonuts.cyou/dashboard** with Discord, choose **Link client**, then type the pairing
+   code into the game and press **Enter**. The chip turns **CONNECTED** and shows **Online**.
+5. Configure trade limits in the panel; live trading stays off until you start it.
+
+Notes for this fork:
+- The hosted dashboard runs at **https://gonuts.cyou**; `vanillavn.xyz` redirects to it so one sign-in covers
+  both domains. All dashboard data lives on that one server.
+- The original hosted extras (swarm API, community ranking, bug-report/uploads at `gonuts.at`) were retired
+  by the upstream project and are not operated by this fork. Core trading and the dashboard link work.
+- `gonuts-dashboard/config.json` can point the client at a different self-hosted dashboard
+  (`baseUrl`, `page`, `redeem`, `check`, `socket`).
 
 <div align="center">
 

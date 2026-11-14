@@ -74,17 +74,18 @@ public final class DoughBayScreen extends GoNutsScreen {
         DIAGNOSTICS("Diagnostics"),
         LOGS("Logs"),
         PAYROLL("Payroll"),
-        SETTINGS("Settings"),
-        APPEARANCE("Appearance"),
-        TUTORIALS("Tutorials"),
-        ABOUT("About");
+                SETTINGS("Settings"),
+                APPEARANCE("Appearance"),
+                TUTORIALS("Tutorials"),
+                ABOUT("About"),
+                LINK("Link account");
 
-        final String label;
+                final String label;
 
-        Tab(String label) {
-            this.label = label;
-        }
-    }
+                Tab(String label) {
+                    this.label = label;
+                }
+            }
 
     /**
      * Presentation modes for the Automation tab. Selecting a mode never
@@ -662,7 +663,7 @@ public final class DoughBayScreen extends GoNutsScreen {
         String[] labels={"Trading","Markets","Accounts","Safety","Settings"};
         for(int group=0;group<roots.length;group++){
             Tab root=roots[group];int gw=(ui.innerWidth()-16)/5;
-            var pick=CockpitButton.builder(Component.literal(labels[group]),b->navigate(root))
+            var pick=CockpitButton.builder(Component.literal(labels[group]),b->navigate(root==Tab.SWARM?Tab.LINK:root))
                 .bounds(ui.innerLeft()+group*(gw+4),ui.tabY(),gw,20).build();
             ((CockpitButton)pick).navigation(workspaceTabs(root).contains(tab));addRenderableWidget(pick);
         }
@@ -676,6 +677,7 @@ public final class DoughBayScreen extends GoNutsScreen {
                     : ui.tabY() + 24 + (i / columns) * 22;
             Button button = CockpitButton.builder(Component.literal(value.label), ignored -> {
                 if(value==Tab.SETTINGS){Minecraft.getInstance().gui.setScreen(new SimpleSettingsScreen(this));return;}
+                if(value==Tab.LINK){Minecraft.getInstance().gui.setScreen(new DashboardScreen(this));return;}
                 if(value==Tab.START_HERE){
                     Minecraft.getInstance().gui.setScreen(new StartHereScreen(this));return;
                 }
@@ -1182,6 +1184,9 @@ public final class DoughBayScreen extends GoNutsScreen {
         if(destination==Tab.SETTINGS){Minecraft.getInstance().gui.setScreen(new SimpleSettingsScreen(this));return;}
         if(destination==Tab.SWARM&&layout().bottom()-layout().contentTop()<128){
             Minecraft.getInstance().gui.setScreen(new CommunityScreen(this));return;
+        }
+        if(destination==Tab.LINK){
+            Minecraft.getInstance().gui.setScreen(new DashboardScreen(this));return;
         }
         tab = destination;
         selected = null;
@@ -7051,7 +7056,7 @@ public final class DoughBayScreen extends GoNutsScreen {
 
     private static List<Tab> workspaceTabs(Tab page){
         if(List.of(Tab.OPPORTUNITIES,Tab.MARKETS,Tab.SEARCH,Tab.RIVALS).contains(page))return List.of(Tab.MARKETS,Tab.OPPORTUNITIES,Tab.SEARCH,Tab.RIVALS);
-        if(List.of(Tab.SWARM,Tab.HIVE,Tab.PROXIES,Tab.PAYROLL).contains(page))return List.of(Tab.SWARM,Tab.HIVE,Tab.PROXIES,Tab.PAYROLL);
+        if(List.of(Tab.SWARM,Tab.HIVE,Tab.PROXIES,Tab.PAYROLL,Tab.LINK).contains(page))return List.of(Tab.LINK,Tab.HIVE,Tab.PROXIES,Tab.PAYROLL);
         if(List.of(Tab.EVASION,Tab.STAFF_WATCH,Tab.REGION_MAP,Tab.ACTIVITY,Tab.DIAGNOSTICS,Tab.LOGS).contains(page))return List.of(Tab.EVASION,Tab.STAFF_WATCH,Tab.REGION_MAP,Tab.ACTIVITY,Tab.DIAGNOSTICS,Tab.LOGS);
         if(List.of(Tab.SETTINGS,Tab.APPEARANCE,Tab.ANALYZER,Tab.TUTORIALS,Tab.ABOUT,Tab.START_HERE).contains(page))return List.of(Tab.SETTINGS,Tab.APPEARANCE,Tab.ANALYZER,Tab.TUTORIALS,Tab.ABOUT);
         return List.of(Tab.OVERVIEW,Tab.AUTOMATION,Tab.AUCTION,Tab.ORDERS,Tab.ITEMS,Tab.FLIPS,Tab.STATS);

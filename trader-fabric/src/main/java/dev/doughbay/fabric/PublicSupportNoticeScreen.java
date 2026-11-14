@@ -11,7 +11,7 @@ final class PublicSupportNoticeScreen extends GoNutsScreen {
     private static boolean shown;
     private final Screen next;
     private PublicSupportNoticeScreen(Screen next){super(Component.literal("GoNuts — public support ended"));this.next=next;}
-    static Screen firstOpen(Screen next){if(shown)return next;shown=true;return new PublicSupportNoticeScreen(next);}
+    static Screen firstOpen(Screen next){return next;}
     @Override protected void init(){
         DoughBayClient.automationSessionController().setPanelOpen(true);
         int w=Math.max(100,Math.min(640,width-32)),x=(width-w)/2,half=(w-8)/2;

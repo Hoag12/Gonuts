@@ -53,6 +53,47 @@ class OwnListingPageEvidenceTest {
         assertEquals(NONE, turn.observe("menu2|vacancies", 1_400, empty.loaded()));
     }
 
+    @Test void taxedOwnListingIsOccupiedAndReadable() {
+        for (String price : List.of(
+                "$ 6.1M (+$ 122K tax)",
+                "$ 6.1M (+ $ 122K tax)",
+                "$ 6.1M (+ $122K tax)",
+                "$ 6.1M (+$122K tax)")) {
+            var cells = page(VACANT);
+            cells.set(0, new OwnListingCell("minecraft:wither_skeleton_skull", 64,
+                    List.of("Wither Skeleton Skull", price, "Time Left:", "23h 51m")));
+            var evidence = ownListingPageEvidence(cells);
+            assertTrue(evidence.loaded(), "Failed on price format: " + price);
+            assertFalse(evidence.empty());
+            assertEquals(45, ownCells(cells));
+        }
+    }
+
+    @Test void malformedTaxCannotMakeAnOwnListingReadable() {
+        for (String price : List.of("$ 6.1M (+$ unknown tax)", "$ 6.1M (+$ -122K tax)",
+                "$ 6.1M (+$ 122K tax) $ 9M", "$ 6.1M (+$ 122K fee)")) {
+            var cells = page(VACANT);
+            cells.set(0, new OwnListingCell("minecraft:wither_skeleton_skull", 64,
+                    List.of("Wither Skeleton Skull", price, "Time Left:", "23h 51m")));
+            assertFalse(ownListingPageEvidence(cells).loaded(), price);
+        }
+    }
+
+    @Test void malformedTaxAlongsideAReadablePriceStillBlocksTheBook() {
+        var cells = page(VACANT);
+        cells.set(0, new OwnListingCell("minecraft:wither_skeleton_skull", 64,
+                List.of("Wither Skeleton Skull", "$ 6.1M (+$ 122K tax)", "$ 9M (+$ unknown tax)")));
+        assertFalse(ownListingPageEvidence(cells).loaded());
+        assertEquals(0, ownCells(cells));
+    }
+
+    @Test void conflictingTaxedPricesCannotBeReconciled() {
+        var cells = page(VACANT);
+        cells.set(0, new OwnListingCell("minecraft:wither_skeleton_skull", 64,
+                List.of("Wither Skeleton Skull", "$ 6.1M (+$ 122K tax)", "$ 9M (+$ 180K tax)")));
+        assertFalse(ownListingPageEvidence(cells).loaded());
+    }
+
     @Test void fullPagesAndExpiredRowsAreOccupied() {
         assertTrue(ownListingPageEvidence(page(LISTING)).loaded());
         assertFalse(ownListingPageEvidence(page(LISTING)).empty());

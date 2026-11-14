@@ -12,7 +12,7 @@ class DashboardWebsiteAccessTest {
         access.open();
         assertEquals("No browser? Copy this address.", access.message());
         access.copy();
-        assertEquals(List.of("https://gonuts.at/dashboard/"), copied);
+        assertEquals(List.of("https://gonuts.cyou/dashboard"), copied);
     }
 
     @Test void missingDesktopLauncherCannotEscapeTheGuiCallback() {
@@ -38,6 +38,6 @@ class DashboardWebsiteAccessTest {
         });
         assertDoesNotThrow(access::copy);
         assertEquals("Copy failed. Type the address above.", access.message());
-        assertEquals("https://gonuts.at/dashboard/", access.address());
+        assertEquals("https://gonuts.cyou/dashboard", access.address());
     }
 }
